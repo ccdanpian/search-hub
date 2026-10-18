@@ -18,6 +18,11 @@ The computer must be on the same tailnet (or LAN) as the server.
 curl.exe http://HUB_HOST:9090/health          # -> {"ok": true, "service": "search-hub", "version": "1.1.0"}
 ```
 
+`Invoke-RestMethod` and the agent CLIs use the system proxy. If this computer has a proxy configured (a local Clash or
+similar) and it is not running, a tailnet request can fail at once with "connection actively refused": use
+`-NoProxy` on `Invoke-RestMethod` (PowerShell 7+) and set `NO_PROXY` to the server address, `localhost` and `127.0.0.1`
+for the agents (below). Adding the address to the proxy's bypass list works as well.
+
 ## 2. Store the token (and the address) as environment variables
 
 Get the value (`SEARCH_HUB_TOKEN=...`) from the server, e.g. `ssh <user>@HUB_HOST cat ~/.config/search-hub/token.env`,
@@ -28,6 +33,7 @@ Windows (PowerShell), for the current user; open a **new** terminal afterwards s
 ```powershell
 [Environment]::SetEnvironmentVariable('SEARCH_HUB_TOKEN', '<value>', 'User')
 [Environment]::SetEnvironmentVariable('SEARCH_HUB_URL', 'http://HUB_HOST:9090', 'User')   # used by the skill's HTTP fallback
+[Environment]::SetEnvironmentVariable('NO_PROXY', 'HUB_HOST,localhost,127.0.0.1', 'User') # keep tailnet traffic off the proxy
 ```
 
 macOS/Linux: `export SEARCH_HUB_TOKEN=<value>` and `export SEARCH_HUB_URL=http://HUB_HOST:9090` in `~/.zshrc` /
