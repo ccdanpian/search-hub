@@ -40,7 +40,7 @@ python -m searchhub search "Python 3.15 release date" --recent
 python -m searchhub fetch https://arxiv.org/pdf/1706.03762 -q "What BLEU score does the big model reach?"
 python -m searchhub serve --listen 127.0.0.1:9090       # HTTP API
 python -m searchhub.mcp                                 # MCP server on stdio
-python -m unittest discover -s tests                    # offline tests (174 run, 14 live ones skipped)
+python -m unittest discover -s tests                    # offline tests (175 run, 14 live ones skipped)
 ```
 
 Run these from the `search-hub` directory, or put it on `PYTHONPATH`. Use `python3` or `py` where that is the launcher.
@@ -118,7 +118,7 @@ claude mcp add -s user search-hub -e PYTHONPATH=$HOME/search-hub -- python3 -m s
 **Remote MCP.** `serve` also answers MCP over Streamable HTTP at `/mcp` (stateless, same tools, same token rules), so
 other computers can use one instance without installing anything:
 `claude mcp add -s user --transport http search-hub http://HOST:9090/mcp --header 'Authorization: Bearer ${SEARCH_HUB_TOKEN}'`.
-Step-by-step: `docs/CLIENTS.md`.
+Step-by-step, including the agent skill `skills/search-hub/SKILL.md`: `docs/CLIENTS.md`.
 
 Codex (`~/.codex/config.toml`): `[mcp_servers.search-hub]` with `command = "python3"`, `args = ["-m", "searchhub.mcp"]`
 and `env = { PYTHONPATH = "..." }`. If the machine needs a proxy for the web, add `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY`
@@ -148,7 +148,7 @@ needed. On any other address a token is required, and the server **refuses to st
 | Request | Purpose |
 |---|---|
 | `GET /health` | Liveness. No token. |
-| `GET /search?q=...&select=5&recent=1&lang=&engines=&categories=&time_range=&judge=0&backend=` | Search. |
+| `GET /search?q=...&select=5&recent=1&lang=&engines=&categories=&time_range=&judge=0&backend=&compact=1` | Search. `compact=1` returns the short agent-facing result (same as MCP `web_search`). |
 | `POST /search` `{"query", "select" or "top_k", "recent", "lang", "engines", "categories", "time_range", "judge", "backend", "no_fallback"}` | Search. Accepts the Hermes "Multi Search" body `{query, top_k}`. |
 | `POST /fetch` `{"urls": [...up to 8] or "url", "question", "max_chars": 8000, "timeout": 20}` | Page text or excerpts. |
 | `POST /mcp` | MCP (Streamable HTTP, JSON responses, no sessions; `GET`/`DELETE` answer 405). |
@@ -253,7 +253,8 @@ searchhub/   core.py (backends, fusion, ranking, judge), fetch.py (page reader, 
 authority.json, AUTHORITY.md   domain tiers and the scoring formula
 config.example.json            sample config
 deploy/pi/                     install.sh, uninstall.sh, settings.yml (Raspberry Pi / Linux, user systemd)
-docs/AGENTS.md                 short instructions to give an AI agent
+skills/search-hub/SKILL.md     the agent skill (Claude Code, Codex): how to use the tools, HTTP fallback
+docs/AGENTS.md                 where the agent instructions live
 docs/DEPLOY.md                 how to deploy: server with install.sh, DeepSeek-only, client; engines; troubleshooting
 docs/CLIENTS.md                using a server from other computers (remote MCP, REST)
 docs/EVALUATION.md             measured quality, token savings, fixes and known gaps

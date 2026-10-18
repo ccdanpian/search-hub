@@ -1,7 +1,7 @@
 """HTTP API for search-hub (standard library only).
 
   GET  /health                       -> {ok, service, version}           (no token needed)
-  GET  /search?q=...&select=5&recent=1&lang=&engines=&categories=&time_range=&judge=0
+  GET  /search?q=...&select=5&recent=1&lang=&engines=&categories=&time_range=&judge=0&compact=1
   POST /search  {query, select|top_k, recent, lang, engines, categories, time_range, judge, backend, no_fallback}
   POST /fetch   {urls:[...] | url, question, max_chars, timeout}   (question -> verified excerpts, see searchhub.extract)
   POST /mcp     MCP over Streamable HTTP (stateless JSON responses): the same web_search / web_fetch tools as
@@ -146,14 +146,19 @@ def make_handler(cfg, host, token):
                 engines=p.get("engines"), categories=p.get("categories"), lang=p.get("lang"),
                 time_range=p.get("time_range"), recent=_truthy(p.get("recent"), False), judge=_truthy(p.get("judge"), True),
                 backend=p.get("backend"), allow_hub=not _truthy(p.get("no_fallback"), False))
+            tried = res.get("tried") or []
+            status = 502 if (not res.get("ok")) and tried and all("no results" not in t for t in tried) else 200
+            if _truthy(p.get("compact"), False):  # what an agent needs; same shape as the MCP web_search result
+                res.pop("_ranked", None)
+                out = mcp.compact(res)
+                out["elapsed_ms"] = int((time.time() - t0) * 1000)
+                return self._send(status, out)
             ranked = res.pop("_ranked", [])
             res["results"] = ranked  # Hermes-compatible list
             res["elapsed_ms"] = int((time.time() - t0) * 1000)
             res["tavily_count"] = sum(1 for r in ranked if "tavily" in r.get("source_engine", ""))
             res["searxng_count"] = len(ranked) - res["tavily_count"]
-            tried = res.get("tried") or []
-            all_failed = (not res.get("ok")) and tried and all("no results" not in t for t in tried)
-            self._send(502 if all_failed else 200, res)
+            self._send(status, res)
 
         def _fetch(self, p):
             urls = p.get("urls") or ([p["url"]] if p.get("url") else [])

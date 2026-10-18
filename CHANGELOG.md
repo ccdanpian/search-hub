@@ -30,6 +30,8 @@
 - Polluted DNS answers (`2001::/32`, Teredo) no longer make Wikipedia, Google etc. "not a public address".
 
 ### Interfaces
+- Agent skill `skills/search-hub/SKILL.md` for Claude Code and Codex (usage guidance plus HTTP recipes for agents without
+  MCP); replaces the old text in `docs/AGENTS.md`. REST `/search` takes `compact=1` for the same short result as MCP.
 - Remote MCP: `serve` answers MCP over Streamable HTTP at `POST /mcp` (stateless JSON, same tools and token rules), so
   other computers register one URL instead of installing search-hub (`docs/CLIENTS.md`). The MCP server echoes the
   client's protocol version when it is one it knows (2025-06-18, 2025-03-26, 2024-11-05).
@@ -39,7 +41,7 @@
 - `doctor` loads the key files before checking, shows them, and skips backends whose key is missing.
 
 ### Project
-- Tests: 30 -> 188 offline (14 more live ones with `SEARCH_HUB_LIVE=1`). Offline tests ignore the machine's keys and config.
+- Tests: 30 -> 189 offline (14 more live ones with `SEARCH_HUB_LIVE=1`). Offline tests ignore the machine's keys and config.
 - `evals/`: search-quality and extraction evaluations graded by DeepSeek Flash; results in `docs/EVALUATION.md`.
 - `deploy/pi/install.sh` keeps an existing `config.json`, creates `deepseek.env`, loads it in the unit, warns when
   `pdftotext` is missing, restarts search-hub on upgrade, and works when run from the install directory itself.

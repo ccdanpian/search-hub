@@ -18,7 +18,7 @@ The computer must be on the same tailnet (or LAN) as the server.
 curl.exe http://HUB_HOST:9090/health          # -> {"ok": true, "service": "search-hub", "version": "1.1.0"}
 ```
 
-## 2. Store the token as an environment variable
+## 2. Store the token (and the address) as environment variables
 
 Get the value (`SEARCH_HUB_TOKEN=...`) from the server, e.g. `ssh <user>@HUB_HOST cat ~/.config/search-hub/token.env`,
 or have it sent with `tailscale file cp`. Do not paste it into chats or commit it.
@@ -27,9 +27,11 @@ Windows (PowerShell), for the current user; open a **new** terminal afterwards s
 
 ```powershell
 [Environment]::SetEnvironmentVariable('SEARCH_HUB_TOKEN', '<value>', 'User')
+[Environment]::SetEnvironmentVariable('SEARCH_HUB_URL', 'http://HUB_HOST:9090', 'User')   # used by the skill's HTTP fallback
 ```
 
-macOS/Linux: `export SEARCH_HUB_TOKEN=<value>` in `~/.zshrc` / `~/.bashrc` (or a 600-mode file you source).
+macOS/Linux: `export SEARCH_HUB_TOKEN=<value>` and `export SEARCH_HUB_URL=http://HUB_HOST:9090` in `~/.zshrc` /
+`~/.bashrc` (or a 600-mode file you source).
 
 ## 3. Register the MCP server
 
@@ -59,7 +61,23 @@ which writes `[mcp_servers.search-hub]` with `url` and `bearer_token_env_var` to
 **Other MCP clients**: any client that speaks Streamable HTTP with a custom header works the same way. Clients that only
 speak stdio need the local install below.
 
-## 4. Scripts and other programs (REST)
+## 4. Install the skill (how to use the tools well)
+
+The MCP tools give agents the ability; the skill `skills/search-hub/SKILL.md` tells them how to use it: pass `question`
+when reading, prefer authority 3, cross-check, cite. It loads only when a task needs web search, and it includes HTTP
+recipes for agents that have no MCP tools but can run commands. The same file works for Claude Code and Codex:
+
+```powershell
+# from a clone or the release archive of search-hub
+mkdir $HOME\.claude\skills\search-hub -Force; copy skills\search-hub\SKILL.md $HOME\.claude\skills\search-hub\
+mkdir $HOME\.codex\skills\search-hub -Force;  copy skills\search-hub\SKILL.md $HOME\.codex\skills\search-hub\
+```
+
+(macOS/Linux: `mkdir -p ~/.claude/skills/search-hub ~/.codex/skills/search-hub` and copy the file into both.) Agents
+without skill support: paste the body of `SKILL.md` (everything after the `---` header) into their instructions
+(`AGENTS.md`, `CLAUDE.md`, system prompt).
+
+## 5. Scripts and other programs (REST)
 
 ```powershell
 $h = @{ Authorization = "Bearer $env:SEARCH_HUB_TOKEN" }
@@ -68,7 +86,19 @@ Invoke-RestMethod http://HUB_HOST:9090/fetch -Method Post -Headers $h -ContentTy
   -Body '{"urls": ["https://arxiv.org/pdf/1706.03762"], "question": "What BLEU score does the big model reach?"}'
 ```
 
-Request and response fields: `README.md`, HTTP API.
+Add `compact=1` to `/search` for the short agent-facing result. Request and response fields: `README.md`, HTTP API.
+
+## Let an agent do the setup
+
+Steps 1, 3 and 4 can be done by the agent itself; step 2 (the token) is yours, so the secret never passes through the
+chat. After you have set the variables and opened a new terminal, start the agent there and give it:
+
+> Set up search-hub on this computer following docs/CLIENTS.md from https://github.com/ccdanpian/search-hub (HUB_HOST is
+> the value in my SEARCH_HUB_URL variable). SEARCH_HUB_TOKEN is already set: do not print it or write it into any file.
+> Check the connection, replace any old local search-hub MCP registration with the remote one for every agent CLI
+> installed here (Claude Code, Codex), install the skill for both, and show me `claude mcp list` at the end.
+
+The new tools appear in the **next** session, not in the one that registered them.
 
 ## What runs where, and limits
 

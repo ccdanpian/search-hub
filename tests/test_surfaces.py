@@ -115,6 +115,17 @@ class Server(unittest.TestCase):
             self.assertEqual((kw["select"], kw["judge"], kw["recent"]), ("2", False, True))
             self.assertEqual(self.req(self.open_srv, "POST", "/search", {"query": "x", "top_k": 4})[0], 200)
 
+    def test_search_compact(self):
+        with mock.patch.object(core, "search", return_value=dict(FAKE)):
+            st, b = self.req(self.open_srv, "GET", "/search?q=hello&compact=1")
+        self.assertEqual(st, 200)
+        self.assertEqual(set(b), {"ok", "query", "backend", "judge", "results", "more", "elapsed_ms"})
+        with mock.patch.object(core, "search", return_value={"ok": False, "error": "e", "tried": ["a: OSError: x"], "_ranked": []}):
+            st, b = self.req(self.open_srv, "POST", "/search", {"query": "x", "compact": True})
+        self.assertEqual((st, b["ok"]), (502, False))
+        with mock.patch.object(core, "search", return_value={"ok": False, "error": "e", "tried": ["a: no results"], "_ranked": []}):
+            self.assertEqual(self.req(self.open_srv, "GET", "/search?q=x&compact=1")[0], 200)  # nothing found is not an outage
+
     def test_validation_errors(self):
         self.assertEqual(self.req(self.open_srv, "GET", "/search")[0], 400)
         self.assertEqual(self.req(self.open_srv, "POST", "/search", raw=b"{not json")[0], 400)
