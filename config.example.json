@@ -1,0 +1,14 @@
+{
+  "backends": [
+    { "name": "local", "type": "searxng", "url": "http://127.0.0.1:8888", "fuse": true },
+    { "name": "deepseek", "type": "deepseek", "key_env": "DEEPSEEK_API_KEY", "count": 10, "fuse": true },
+    { "name": "pi", "type": "hub", "url": "http://HUB_HOST:9090", "token_env": "SEARCH_HUB_PI_TOKEN" }
+  ],
+  "backend_timeout": 15,
+  "judge": { "enabled": true, "model": "openai/gpt-6-luna-decisions", "batch": 15, "max_batches": 3, "drop_below": 0.2,
+             "flash_fallback": true },
+  "server": { "token_env": "SEARCH_HUB_TOKEN", "max_concurrent": 6, "allow_private_fetch": false },
+  "fetch_fallback": { "enabled": true },
+  "extract": { "enabled": true, "max_output_chars": 4500, "raw_below": 3500, "timeout": 30 },
+  "env_files": ["~/.config/search-hub/judge.env", "~/.config/search-hub/deepseek.env"]
+}

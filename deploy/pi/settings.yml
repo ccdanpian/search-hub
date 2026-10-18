@@ -1,0 +1,53 @@
+# SearXNG settings for the search-hub engine set (second instance, port 8889). secret_key is filled in by install.sh.
+use_default_settings: true
+general:
+  instance_name: "search-hub SearXNG"
+  enable_metrics: false
+search:
+  safe_search: 0
+  default_lang: "auto"
+  formats: [html, json]
+server:
+  port: 8889
+  bind_address: "127.0.0.1"
+  base_url: "http://127.0.0.1:8889/"
+  secret_key: "__SECRET__"
+  limiter: false
+  public_instance: false
+  image_proxy: false
+  method: "GET"
+outgoing:
+  request_timeout: 10.0
+  max_request_timeout: 15.0
+  enable_http2: true
+  # PROXY-BEGIN (install.sh fills in $PROXY, or removes this block when PROXY is empty)
+  proxies:
+    all://:
+      - __PROXY__
+  # PROXY-END
+# Engine choices tested from mainland China through a proxy on 2026-10-18 (reasons: docs/DEPLOY.md).
+# google cse is on by default in SearXNG and stays on. Verify any new engine with engines=<name> and no categories:
+# an unknown or inactive name is dropped silently and the request falls back to the default engines.
+engines:
+  - name: google
+    disabled: true
+  - name: brave
+    disabled: true
+  - name: duckduckgo
+    disabled: true
+  - name: yandex
+    disabled: false
+  - name: yahoo
+    disabled: false
+  - name: naver
+    disabled: false
+  - name: baidu
+    disabled: true
+  - name: bing
+    disabled: true
+  - name: sogou
+    disabled: true
+  - name: quark
+    disabled: true
+  - name: 360search
+    disabled: true

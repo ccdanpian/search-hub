@@ -1,0 +1,2 @@
+{ "backends": [ { "name": "dead", "type": "searxng", "url": "http://127.0.0.1:1" } ], "judge": { "enabled": false },
+  "env_files": [] }
