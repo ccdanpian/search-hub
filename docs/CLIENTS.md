@@ -7,6 +7,12 @@ install, no Python, no keys except the server's token, and every upgrade happens
 Below, `HUB_HOST` is the server's address as the other computers reach it: its Tailscale IP (`tailscale ip -4` on the
 server, a `100.x.y.z` address) or MagicDNS name, or a LAN address if you listen there.
 
+**Use an address the server actually listens on.** The installer listens on `127.0.0.1` and on the Tailscale IP only,
+never on the LAN address. A LAN address reaches the server's network interface, so a ping to it succeeds, but the TCP
+connection is refused on port 9090. Socket exceptions report this as the *other* computer refusing the connection,
+which is misleading. To use the LAN, add a listener on the server (`serve --listen 192.168.x.y:9090`, a token is then
+required) or listen on `0.0.0.0` behind a firewall.
+
 Endpoint: `http://HUB_HOST:9090/mcp` (MCP Streamable HTTP, stateless). REST: `/search`, `/fetch`, `/health` on the
 same port. Every non-loopback listener requires the token from the server's `~/.config/search-hub/token.env`.
 
@@ -15,8 +21,11 @@ same port. Every non-loopback listener requires the token from the server's `~/.
 The computer must be on the same tailnet (or LAN) as the server.
 
 ```powershell
-curl.exe http://HUB_HOST:9090/health          # -> {"ok": true, "service": "search-hub", "version": "1.1.0"}
+curl.exe http://HUB_HOST:9090/health                          # -> {"ok": true, "service": "search-hub", "version": "1.1.0"}
+Test-NetConnection HUB_HOST -Port 9090 -InformationLevel Quiet # -> True   (answers "does anything listen there?")
 ```
+
+On the server, `ss -tln | grep 9090` shows what it listens on; that is the list of addresses to choose from.
 
 `Invoke-RestMethod` and the agent CLIs use the system proxy. If this computer has a proxy configured (a local Clash or
 similar) and it is not running, a tailnet request can fail at once with "connection actively refused": use
@@ -24,6 +33,8 @@ similar) and it is not running, a tailnet request can fail at once with "connect
 for the agents (below). Adding the address to the proxy's bypass list works as well.
 
 ## 2. Store the token (and the address) as environment variables
+
+`SEARCH_HUB_URL` must use the same address as `HUB_HOST` above.
 
 Get the value (`SEARCH_HUB_TOKEN=...`) from the server, e.g. `ssh <user>@HUB_HOST cat ~/.config/search-hub/token.env`,
 or have it sent with `tailscale file cp`. Do not paste it into chats or commit it.

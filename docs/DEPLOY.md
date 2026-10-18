@@ -71,6 +71,7 @@ Without a DeepSeek key, search uses SearXNG alone and there is no fetch fallback
 ```bash
 cd ~/search-hub && python3 -m searchhub doctor   # every backend [ok], keys found
 curl -s http://127.0.0.1:9090/health
+ss -tln | grep 9090                              # listeners to hand to clients (tailnet IP when Tailscale is installed)
 python3 -m searchhub search "raspberry pi 5 power" --text
 python3 -m unittest discover -s tests            # offline tests
 ```
